@@ -1,20 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pastry Culture | Reels TV</title>
-<style>html,body{margin:0;width:100%;height:100%;background:#080e1d;overflow:hidden}video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#080e1d}#start{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#080e1d;color:#e8d6aa;font:24px system-ui;border:0;cursor:pointer}</style>
+<style>
+html,body{margin:0;width:100%;height:100%;background:#080808;overflow:hidden}
+#screen{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#080808}
+#controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:10;opacity:0;transition:opacity .3s}
+body:focus-within #controls,body.show-controls #controls{opacity:1}
+button{background:rgba(0,0,0,.75);color:white;border:1px solid #aaa;border-radius:12px;padding:13px 18px;font-size:16px}
+#start{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20}
+</style>
 </head>
 <body>
 <video id="screen" autoplay muted playsinline preload="auto"></video>
-<button id="start" type="button">▶ Start Pastry Culture Reels</button>
+<button id="start" type="button" hidden>Start Pastry Culture Reels</button>
+<div id="controls">
+<button id="pause" type="button">Pause</button>
+<button id="fullscreen" type="button">Full Screen</button>
+</div>
 <script>
 const files=['reel-1.mp4','reel-2.mp4','reel-3.mp4'];
-const screen=document.getElementById('screen'),start=document.getElementById('start');let current=0;
-function playCurrent(){screen.src=files[current];screen.load();const p=screen.play();if(p&&p.catch)p.catch(()=>{start.style.display='flex'});}
-screen.addEventListener('ended',()=>{current=(current+1)%files.length;playCurrent()});
-screen.addEventListener('error',()=>{start.style.display='flex';start.textContent='Tap to play / Check video files'});
-start.addEventListener('click',()=>{start.style.display='none';screen.play().catch(()=>start.style.display='flex')});
+const screen=document.getElementById('screen');
+const start=document.getElementById('start');
+const pause=document.getElementById('pause');
+const fullscreen=document.getElementById('fullscreen');
+let current=0;
+let hideTimer;
+function showControls(){
+ document.body.classList.add('show-controls');
+ clearTimeout(hideTimer);
+ hideTimer=setTimeout(()=>document.body.classList.remove('show-controls'),5000);
+}
+function playCurrent(){
+ screen.src=files[current];
+ screen.load();
+ const p=screen.play();
+ if(p&&p.catch)p.catch(()=>{start.hidden=false;showControls();});
+}
+screen.addEventListener('ended',()=>{
+ current=(current+1)%files.length;
+ playCurrent();
+});
+screen.addEventListener('error',()=>{start.hidden=false;start.textContent='Video unavailable — check MP4 files';showControls();});
+start.addEventListener('click',()=>{
+ start.hidden=true;
+ screen.play().catch(()=>{start.hidden=false;});
+});
+pause.addEventListener('click',()=>{
+ if(screen.paused){screen.play();pause.textContent='Pause';}
+ else{screen.pause();pause.textContent='Play';}
+ showControls();
+});
+fullscreen.addEventListener('click',async()=>{
+ try{
+  if(document.fullscreenElement){await document.exitFullscreen();}
+  else if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();}
+  else if(screen.webkitEnterFullscreen){screen.webkitEnterFullscreen();}
+  else{fullscreen.textContent='Fullscreen not supported';}
+ }catch(e){fullscreen.textContent='Fullscreen unavailable';}
+ showControls();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'||e.key===' '){showControls();}
+});
+document.addEventListener('click',e=>{
+ if(!e.target.closest('button'))showControls();
+});
+document.addEventListener('mousemove',showControls);
 playCurrent();
 </script>
 </body>
